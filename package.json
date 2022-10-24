@@ -1,0 +1,16 @@
+{
+  "name": "socket_test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "simple-peer": "^9.11.1",
+    "socket.io-client": "^4.5.3",
+    "wrtc": "^0.4.7"
+  }
+}
