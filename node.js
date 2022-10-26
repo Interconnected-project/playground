@@ -7,7 +7,7 @@ const role = "NODE"
 
 var peers = [];
 
-var brokerSocket = io.connect('http://ec2-3-208-18-248.compute-1.amazonaws.com:8000', {reconnect: true, query: {"id": myId, "role": role}});
+var brokerSocket = io.connect('ws://localhost:8000', {reconnect: true, query: {"id": myId, "role": role}});
 
 brokerSocket.on('connect', function (s) {
     console.log('Node Connected to Broker!');
@@ -18,25 +18,22 @@ brokerSocket.on('connect_error', (err) => {
 })
 
 brokerSocket.on("RECRUITMENT_BROADCAST", (payload) => {
-    console.log("Received RECRUITMENT_BROADCAST from " + payload.invokingEndpointId)
-    console.log("Sending RECRUITMENT_ACCEPT to " + payload.invokingEndpointId)
-    brokerSocket.emit("RECRUITMENT_ACCEPT", {
-        invokingEndpointId: payload.invokingEndpointId,
-        operationId: payload.operationId,
-        nodeId: myId
-    })
+    console.log("Received RECRUITMENT_BROADCAST from " + payload.invokingEndpointId + " to connect to " + payload.initiatorId)
+    console.log("Sending RECRUITMENT_ACCEPT to " + payload.initiatorId)
+    payload.answererId = myId;
+    brokerSocket.emit("RECRUITMENT_ACCEPT", payload)
 })
 
 brokerSocket.on("INCOMING_CONNECTION", (payload) => {
-    console.log("Received INCOMING_CONNECTION from " + payload.invokingEndpointId)
+    console.log("Received INCOMING_CONNECTION from " + payload.initiatorId)
     const peer = new Peer({ initiator: false, trickle: false, wrtc: wrtc });
     peers.push({
-        id: payload.invokingEndpointId,
+        id: payload.initiatorId,
         peer: peer
     })
 
     peer.on("signal", data => {
-        console.log("Sending ANSWER_CONNECTION to " + payload.invokingEndpointId)
+        console.log("Sending ANSWER_CONNECTION to " + payload.initiatorId)
         payload.signal = data;
         brokerSocket.emit("ANSWER_CONNECTION", payload)
     })
@@ -48,4 +45,4 @@ brokerSocket.on("INCOMING_CONNECTION", (payload) => {
     peer.signal(payload.signal);
 })
 
-// ws://localhost:8000
+// http://ec2-3-208-18-248.compute-1.amazonaws.com:8000
