@@ -44,6 +44,15 @@ socket.on('OFFER_NODE', payload => {
         setInterval(function(){
             peer.send("[" + i++ + "] Hey " + payload.answererId + " it's me, " + myId + "!")
         }, 2000);
+        var n2n = {
+            invokingEndpointId: myId,
+            operationId: "008",
+            nodesToReach: 1,
+            initiatorId: payload.answererId,
+            initiatorRole: "NODE"
+        }
+        console.log('Sending RECRUITMENT_REQUEST node to node')
+        socket.emit('RECRUITMENT_REQUEST', n2n);
     })
 })
 
