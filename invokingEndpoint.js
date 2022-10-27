@@ -95,6 +95,7 @@ function handleICECandidateEvent(payload) {
         if (e.candidate) {
             const icePayload = {
                 fromId: myId,
+                senderRole: role,
                 toId: payload.answererId,
                 receiverRole: "NODE", 
                 candidate: e.candidate

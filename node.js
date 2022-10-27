@@ -92,8 +92,9 @@ function handleICECandidateEvent(payload) {
         if (e.candidate) {
             const icePayload = {
                 fromId: myId,
+                senderRole: role,
                 toId: payload.initiatorId,
-                receiverRole: "INVOKING_ENDPOINT", 
+                receiverRole: payload.initiatorRole, 
                 candidate: e.candidate
             }
             brokerSocket.emit("ICE_CANDIDATE", icePayload);
