@@ -10,8 +10,8 @@ const role = "NODE"
 var IEpeers = [];
 var nodePeers = [];
 
-// const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
-const CONNECTION_STRING = 'ws://localhost:8000';
+const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
+// const CONNECTION_STRING = 'ws://localhost:8000';
 
 var brokerSocket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 

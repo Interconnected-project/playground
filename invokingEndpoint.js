@@ -7,8 +7,8 @@ const io = require("socket.io-client");
 const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
 
-// const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
-const CONNECTION_STRING = 'ws://localhost:8000';
+const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
+// const CONNECTION_STRING = 'ws://localhost:8000';
 
 var socket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 var peers = [];
@@ -93,6 +93,7 @@ function handleTestChannelMessage(testChannel){
 function handleICECandidateEvent(payload) {
     return (e) => {
         if (e.candidate) {
+            console.log("ice candidate")
             const icePayload = {
                 fromId: myId,
                 senderRole: role,
@@ -114,6 +115,7 @@ socket.on('FINALIZE_CONNECTION', payload => {
 
 socket.on('ICE_CANDIDATE', payload => {
     console.log("Received ICE_CANDIDATE from " + payload.fromId)
+    console.log(payload.candidate)
     const candidate = new RTCIceCandidate(payload.candidate);
     peers
         .find(p => p.id === payload.fromId)
