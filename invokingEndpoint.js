@@ -7,19 +7,18 @@ const io = require("socket.io-client");
 const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
 
-const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
-// const CONNECTION_STRING = 'ws://localhost:8000';
+// const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
+const CONNECTION_STRING = 'ws://localhost:8000';
 
 var socket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 var peers = [];
 
 socket.on('connect', function (s) {
     var test = {
-        invokingEndpointId: myId,
         operationId: "007",
         nodesToReach: 1,
-        initiatorId: myId,
-        initiatorRole: role
+        masterId: myId,
+        masterRole: role
     }
     console.log('Invoking Endpoint Connected to Broker');
     console.log('Sending RECRUITMENT_REQUEST')
@@ -30,8 +29,8 @@ socket.on('connect_error', function (err) {
     console.log("Broker " + err.message);
 });
 
-socket.on('OFFER_NODE', payload => {
-    console.log("Received OFFER_NODE from " + payload.answererId)
+socket.on('RECRUITMENT_ACCEPT', payload => {
+    console.log("Received RECRUITMENT_ACCEPT from " + payload.slaveId)
     const peer = new RTCPeerConnection({
         iceServers: [
             {
@@ -63,7 +62,7 @@ socket.on('OFFER_NODE', payload => {
     };
 
     peers.push({
-        id: payload.answererId,
+        id: payload.slaveId,
         peer: peer,
         testChannel: testChannel
     })
@@ -71,9 +70,9 @@ socket.on('OFFER_NODE', payload => {
     peer.createOffer().then(offer => {
         return peer.setLocalDescription(offer);
     }).then(() => {
-        console.log("Sending INITIALIZE_CONNECTION to " + payload.answererId)
+        console.log("Sending REQUEST_CONNECTION to " + payload.slaveId)
         payload.sdp = peer.localDescription
-        socket.emit("INITIALIZE_CONNECTION", payload)
+        socket.emit("REQUEST_CONNECTION", payload)
     }).catch(e => console.log(e));
 
 })
@@ -91,35 +90,45 @@ function handleTestChannelMessage(testChannel){
 }
 
 function handleICECandidateEvent(payload) {
+    console.log("ice candidate event " + payload)
     return (e) => {
         if (e.candidate) {
-            console.log("ice candidate")
-            const icePayload = {
-                fromId: myId,
-                senderRole: role,
-                toId: payload.answererId,
-                receiverRole: "NODE", 
-                candidate: e.candidate
-            }
-            socket.emit("ICE_CANDIDATE", icePayload);
+            const peer = peers.find(p => p.id === payload.slaveId).peer
+            const interval = setInterval(() => {
+                if(peer.remoteDescription !== null && peer.localDescription !== null){
+                    console.log("ice candidate")
+                    const icePayload = {
+                        fromId: myId,
+                        fromRole: role,
+                        toId: payload.slaveId,
+                        toRole: "NODE", 
+                        candidate: e.candidate
+                    }
+                    socket.emit("ICE_CANDIDATE", icePayload);
+                    clearInterval(interval)
+                }
+            }, 200)
         }
     }
 }
 
-socket.on('FINALIZE_CONNECTION', payload => {
-    console.log("Received FINALIZE_CONNECTION from " + payload.answererId + ", opening P2P")
+socket.on('ANSWER_CONNECTION', payload => {
+    console.log("Received ANSWER_CONNECTION from " + payload.slaveId + ", opening P2P")
     const desc = new RTCSessionDescription(payload.sdp);
-    const peer = peers.find(p => p.id === payload.answererId).peer
+    const peer = peers.find(p => p.id === payload.slaveId).peer
     peer.setRemoteDescription(desc).catch(e => console.log(e));
 })
 
 socket.on('ICE_CANDIDATE', payload => {
-    console.log("Received ICE_CANDIDATE from " + payload.fromId)
-    console.log(payload.candidate)
     const candidate = new RTCIceCandidate(payload.candidate);
-    peers
-        .find(p => p.id === payload.fromId)
-        .peer
-        .addIceCandidate(candidate)
-        .catch(e => console.log(e));
+    if(payload.fromId !== undefined){
+        const p = peers.find(p => p.id === payload.fromId).peer
+        const interval = setInterval(() => {
+            if(p.remoteDescription !== null && p.localDescription !== null){
+                console.log("Received ICE_CANDIDATE from " + payload.fromId)
+                p.addIceCandidate(candidate).catch(e => console.log(e));
+                clearInterval(interval)
+            }
+        }, 200)
+    }  
 })
