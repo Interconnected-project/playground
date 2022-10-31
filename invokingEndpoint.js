@@ -6,16 +6,17 @@ const io = require("socket.io-client");
 
 const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
+const OPERATION_ID = "007";
 
-// const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
-const CONNECTION_STRING = 'ws://localhost:8000';
+const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
+// const CONNECTION_STRING = 'ws://localhost:8000';
 
 var socket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 var peers = [];
 
 socket.on('connect', function (s) {
     var test = {
-        operationId: "007",
+        operationId: OPERATION_ID,
         nodesToReach: 1,
         masterId: myId,
         masterRole: role
@@ -50,9 +51,14 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
     testChannel.onopen = function(event) {
         var readyState = testChannel.readyState;
         if (readyState == "open") {
-            const i = 0;
+            /*const i = 0;
             console.log("send message " + i)
-            testChannel.send(i.toString())
+            testChannel.send(i.toString())*/
+            
+            testChannel.send(JSON.stringify({
+                operationId: OPERATION_ID,
+                nodesToReach: 2
+            }))
         }
       };
 
@@ -79,9 +85,11 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
 
 function handleTestChannelMessage(testChannel){
     return (e) => {
+        console.log("XXXXXXXXXXXXXXX received: " + e.data)
+        /*
         let value = parseInt(e.data)
         console.log("received " + value++);
-        testChannel.send(value.toString())
+        testChannel.send(value.toString())*/
         /*setInterval(function(){ 
             console.log("send message " + value)
             testChannel.send(value.toString())
