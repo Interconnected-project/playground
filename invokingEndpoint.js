@@ -56,8 +56,13 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
             testChannel.send(i.toString())*/
             
             testChannel.send(JSON.stringify({
-                operationId: OPERATION_ID,
-                nodesToReach: 2
+                channel: 'START_JOB',
+                payload: {
+                    name: 'MAPREDUCE_MASTER',
+                    params: {
+                        todo: 'TODO'
+                    }
+                }
             }))
         }
       };
