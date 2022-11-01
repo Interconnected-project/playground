@@ -8,8 +8,8 @@ const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
 const OPERATION_ID = "007";
 
-const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
-// const CONNECTION_STRING = 'ws://localhost:8000';
+// const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
+const CONNECTION_STRING = 'ws://localhost:8000';
 
 var socket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 var peers = [];
@@ -60,7 +60,8 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
                 payload: {
                     name: 'MAPREDUCE_MASTER',
                     params: {
-                        todo: 'TODO'
+                        mapWorkers: 5,
+                        reduceWorkers: 2
                     }
                 }
             }))
