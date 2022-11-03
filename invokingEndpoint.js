@@ -60,8 +60,10 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
                 payload: {
                     name: 'MAPREDUCE_MASTER',
                     params: {
-                        mapWorkers: 5,
-                        reduceWorkers: 2
+                        mapWorkers: 1,
+                        reduceWorkers: 1,
+                        mapFunction : "console.log(\"map function\")",
+                        reduceFunction : "console.log(\"reduce function\")",
                     }
                 }
             }))
