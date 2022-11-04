@@ -60,7 +60,7 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
                 payload: {
                     name: 'MAPREDUCE_MASTER',
                     params: {
-                        mapWorkers: 1,
+                        mapWorkers: 2,
                         reduceWorkers: 1,
                         mapFunction : "console.log(\"map function\")",
                         reduceFunction : "console.log(\"reduce function\")",
@@ -93,7 +93,27 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
 
 function handleTestChannelMessage(testChannel){
     return (e) => {
-        console.log("XXXXXXXXXXXXXXX received: " + e.data)
+        const parsedMsg = JSON.parse(e.data)
+        console.log(parsedMsg)
+        switch(parsedMsg.channel){
+            case "START_JOB": {
+                if(parsedMsg.payload.result === "ACK"){
+                    console.log("START_JOB ACK RECEIVED")
+                    testChannel.send(JSON.stringify({
+                        channel: 'EXECUTE_TASK',
+                        payload: {
+                            name: 'MAPREDUCE_REGION_SPLITS',
+                            params: {
+                                regionId: "69",
+                                splits: ["first", "second", "third", "fourth", "fifth"]
+                            }
+                        }
+                    }))
+                } else {
+                    console.log("START_JOB DID NOT RESPOND WITH ACK, NO BUENO")
+                }
+            }
+        }
         /*
         let value = parseInt(e.data)
         console.log("received " + value++);
@@ -106,13 +126,11 @@ function handleTestChannelMessage(testChannel){
 }
 
 function handleICECandidateEvent(payload) {
-    console.log("ice candidate event " + payload)
     return (e) => {
         if (e.candidate) {
             const peer = peers.find(p => p.id === payload.slaveId).peer
             const interval = setInterval(() => {
                 if(peer.remoteDescription !== null && peer.localDescription !== null){
-                    console.log("ice candidate")
                     const icePayload = {
                         fromId: myId,
                         fromRole: role,
@@ -141,7 +159,6 @@ socket.on('ICE_CANDIDATE', payload => {
         const p = peers.find(p => p.id === payload.fromId).peer
         const interval = setInterval(() => {
             if(p.remoteDescription !== null && p.localDescription !== null){
-                console.log("Received ICE_CANDIDATE from " + payload.fromId)
                 p.addIceCandidate(candidate).catch(e => console.log(e));
                 clearInterval(interval)
             }
