@@ -8,8 +8,8 @@ const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
 const OPERATION_ID = "007";
 
-// const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
-const CONNECTION_STRING = 'ws://localhost:8000';
+const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
+// const CONNECTION_STRING = 'ws://localhost:8000';
 
 var socket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 var peers = [];
@@ -62,7 +62,7 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
                     params: {
                         mapWorkers: 2,
                         reduceWorkers: 1,
-                        mapFunction : "console.log(\"map function\")",
+                        mapFunction : "(s) => { return [s.length, s] }",
                         reduceFunction : "console.log(\"reduce function\")",
                     }
                 }
@@ -105,7 +105,17 @@ function handleTestChannelMessage(testChannel){
                             name: 'MAPREDUCE_REGION_SPLITS',
                             params: {
                                 regionId: "69",
-                                splits: ["first", "second", "third", "fourth", "fifth"]
+                                splits: ["first", "second", "third", "fourth", "fifth", "sixth"]
+                            }
+                        }
+                    }))
+                    testChannel.send(JSON.stringify({
+                        channel: 'EXECUTE_TASK',
+                        payload: {
+                            name: 'MAPREDUCE_REGION_SPLITS',
+                            params: {
+                                regionId: "420",
+                                splits: ["dog", "cat", "monkey", "sheep", "bird"]
                             }
                         }
                     }))
