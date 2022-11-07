@@ -7,10 +7,22 @@ const io = require("socket.io-client");
 const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
 const OPERATION_ID = "007";
+const MAP_FUNCTION = "(s) => { return [s, 1] }";
+const REDUCE_FUNCTION = "(v1, v2) => { return v1 + v2 }";
+const MAP_WORKERS_REQUESTED = 2;
+const REDUCE_WORKERS_REQUESTED = 1;
+const SPLITS = new Array(
+    ["dog", "cow", "dog", "cat", "bird", "cat", "cat"],
+    ["bird", "dog", "crocodile", "bird", "bird"],
+    ["pidgeon", "dog", "bee", "bee", "squirrel", "cat"],
+    ["dog", "dog", "crocodile", "bird", "bird", "bee", "dog"],
+)
+var splitsIndex = 0;
 
 const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
 // const CONNECTION_STRING = 'ws://localhost:8000';
 
+console.log("STARTING INVOKING ENDPOINT");
 var socket = io.connect(CONNECTION_STRING, {reconnect: true, query: {"id": myId, "role": role}});
 var peers = [];
 
@@ -51,19 +63,20 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
     testChannel.onopen = function(event) {
         var readyState = testChannel.readyState;
         if (readyState == "open") {
-            /*const i = 0;
-            console.log("send message " + i)
-            testChannel.send(i.toString())*/
-            
+            console.log("P2P connection is ready, send START_JOB with name MAPREDUCE_MASTER");
+            console.log("Map workers requested: " + MAP_WORKERS_REQUESTED);
+            console.log("Map function: " + MAP_FUNCTION)
+            console.log("Reduce workers requested: " + REDUCE_WORKERS_REQUESTED);
+            console.log("Reduce function: " + REDUCE_FUNCTION + "\n")
             testChannel.send(JSON.stringify({
                 channel: 'START_JOB',
                 payload: {
                     name: 'MAPREDUCE_MASTER',
                     params: {
-                        mapWorkers: 2,
-                        reduceWorkers: 1,
-                        mapFunction : "(s) => { return [s.length, s] }",
-                        reduceFunction : "console.log(\"reduce function\")",
+                        mapWorkers: MAP_WORKERS_REQUESTED,
+                        reduceWorkers: REDUCE_WORKERS_REQUESTED,
+                        mapFunction : MAP_FUNCTION,
+                        reduceFunction : REDUCE_FUNCTION,
                     }
                 }
             }))
@@ -72,7 +85,7 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
 
     peer.onicecandidate = handleICECandidateEvent(payload);
     peer.onconnectionstatechange = (event) => {
-        console.log(event.type + " " + peer.connectionState)
+        // console.log(event.type + " " + peer.connectionState)
     };
 
     peers.push({
@@ -94,44 +107,51 @@ socket.on('RECRUITMENT_ACCEPT', payload => {
 function handleTestChannelMessage(testChannel){
     return (e) => {
         const parsedMsg = JSON.parse(e.data)
-        console.log(parsedMsg)
         switch(parsedMsg.channel){
             case "START_JOB": {
                 if(parsedMsg.payload.result === "ACK"){
-                    console.log("START_JOB ACK RECEIVED")
+                    console.log("START_JOB ACK for MAPREDUCE_MASTER received")
+                    const i = splitsIndex++;
+                    console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS for region " + i + " with splits:\n[" + SPLITS[i] + "]\n")
                     testChannel.send(JSON.stringify({
                         channel: 'EXECUTE_TASK',
                         payload: {
                             name: 'MAPREDUCE_REGION_SPLITS',
                             params: {
-                                regionId: "69",
-                                splits: ["first", "second", "third", "fourth", "fifth", "sixth"]
-                            }
-                        }
-                    }))
-                    testChannel.send(JSON.stringify({
-                        channel: 'EXECUTE_TASK',
-                        payload: {
-                            name: 'MAPREDUCE_REGION_SPLITS',
-                            params: {
-                                regionId: "420",
-                                splits: ["dog", "cat", "monkey", "sheep", "bird"]
+                                regionId: i,
+                                splits: SPLITS[i]
                             }
                         }
                     }))
                 } else {
                     console.log("START_JOB DID NOT RESPOND WITH ACK, NO BUENO")
                 }
-            }
+            } break;
+            case 'EXECUTE_TASK': {
+                if(parsedMsg.payload.result === "ACK"){
+                    console.log("received EXECUTE_TASK ACK for MAPREDUCE_REGION_SPLITS")
+                    if(splitsIndex < SPLITS.length){
+                        const i = splitsIndex++;
+                        console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS for region " + i + " with splits:\n[" + SPLITS[i] + "]\n")
+                        testChannel.send(JSON.stringify({
+                            channel: 'EXECUTE_TASK',
+                            payload: {
+                                name: 'MAPREDUCE_REGION_SPLITS',
+                                params: {
+                                    regionId: i,
+                                    splits: SPLITS[i]
+                                }
+                            }
+                        }))
+                    }
+                } else {
+                    console.log("EXECUTE_TASK DID NOT RESPOND WITH ACK, NO BUENO")
+                }
+            } break;
+            case 'TASK_COMPLETED': {
+                console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " with result:\n" + parsedMsg.payload.params.result + "\n")
+            } break;
         }
-        /*
-        let value = parseInt(e.data)
-        console.log("received " + value++);
-        testChannel.send(value.toString())*/
-        /*setInterval(function(){ 
-            console.log("send message " + value)
-            testChannel.send(value.toString())
-        }, 1000);*/
     }
 }
 
