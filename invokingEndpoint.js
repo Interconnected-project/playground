@@ -6,15 +6,16 @@ const io = require("socket.io-client");
 
 const myId = "IE_" + Date.now();
 const role = "INVOKING_ENDPOINT"
-const OPERATION_ID = "007";
+const OPERATION_ID = "008";
 const MAP_FUNCTION = "(s) => { return [s, 1] }";
 const REDUCE_FUNCTION = "(v1, v2) => { return v1 + v2 }";
 const MAP_WORKERS_REQUESTED = 2;
 const REDUCE_WORKERS_REQUESTED = 1;
 const ANIMALS = ["dog", "cow", "cat", "pidgeon", "crocodile", "bee"];
-const SPLITS_NUMBER = 10;
+const SPLITS_NUMBER = 10000;
 var splitsSent = 0;
 const VALUES_PER_SPLIT = 1000;
+var accumulatedResults = 0;
 
 
 const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
@@ -138,16 +139,20 @@ function handleTestChannelMessage(testChannel){
                             splits.push(ANIMALS[Math.floor(Math.random() * ANIMALS.length)])
                         }
                         console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS")
-                        testChannel.send(JSON.stringify({
-                            channel: 'EXECUTE_TASK',
-                            payload: {
-                                name: 'MAPREDUCE_REGION_SPLITS',
-                                params: {
-                                    regionId: splitsSent,
-                                    splits: splits
+                        const foo = splitsSent;
+                        const interv = setInterval(() => {
+                            clearInterval(interv);
+                            testChannel.send(JSON.stringify({
+                                channel: 'EXECUTE_TASK',
+                                payload: {
+                                    name: 'MAPREDUCE_REGION_SPLITS',
+                                    params: {
+                                        regionId: foo,
+                                        splits: splits
+                                    }
                                 }
-                            }
-                        }))
+                            }))
+                        }, 50)
                         ++splitsSent;
                     }
                 } else {
@@ -155,7 +160,7 @@ function handleTestChannelMessage(testChannel){
                 }
             } break;
             case 'TASK_COMPLETED': {
-                console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " with result:\n" + parsedMsg.payload.params.result + "\n")
+                console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " with result:\n" + parsedMsg.payload.params.result + "\naccumulated: " + ++accumulatedResults + "\n")
             } break;
         }
     }
