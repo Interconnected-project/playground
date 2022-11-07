@@ -11,13 +11,11 @@ const MAP_FUNCTION = "(s) => { return [s, 1] }";
 const REDUCE_FUNCTION = "(v1, v2) => { return v1 + v2 }";
 const MAP_WORKERS_REQUESTED = 2;
 const REDUCE_WORKERS_REQUESTED = 1;
-const SPLITS = new Array(
-    ["dog", "cow", "dog", "cat", "bird", "cat", "cat"],
-    ["bird", "dog", "crocodile", "bird", "bird"],
-    ["pidgeon", "dog", "bee", "bee", "squirrel", "cat"],
-    ["dog", "dog", "crocodile", "bird", "bird", "bee", "dog"],
-)
-var splitsIndex = 0;
+const ANIMALS = ["dog", "cow", "cat", "pidgeon", "crocodile", "bee"];
+const SPLITS_NUMBER = 10;
+var splitsSent = 0;
+const VALUES_PER_SPLIT = 1000;
+
 
 const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
 // const CONNECTION_STRING = 'ws://localhost:8000';
@@ -111,18 +109,22 @@ function handleTestChannelMessage(testChannel){
             case "START_JOB": {
                 if(parsedMsg.payload.result === "ACK"){
                     console.log("START_JOB ACK for MAPREDUCE_MASTER received")
-                    const i = splitsIndex++;
-                    console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS for region " + i + " with splits:\n[" + SPLITS[i] + "]\n")
+                    const splits = new Array();
+                    for(let i = 0; i < VALUES_PER_SPLIT; i++){
+                        splits.push(ANIMALS[Math.floor(Math.random() * ANIMALS.length)])
+                    }
+                    console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS")
                     testChannel.send(JSON.stringify({
                         channel: 'EXECUTE_TASK',
                         payload: {
                             name: 'MAPREDUCE_REGION_SPLITS',
                             params: {
-                                regionId: i,
-                                splits: SPLITS[i]
+                                regionId: splitsSent,
+                                splits: splits
                             }
                         }
                     }))
+                    ++splitsSent;
                 } else {
                     console.log("START_JOB DID NOT RESPOND WITH ACK, NO BUENO")
                 }
@@ -130,19 +132,23 @@ function handleTestChannelMessage(testChannel){
             case 'EXECUTE_TASK': {
                 if(parsedMsg.payload.result === "ACK"){
                     console.log("received EXECUTE_TASK ACK for MAPREDUCE_REGION_SPLITS")
-                    if(splitsIndex < SPLITS.length){
-                        const i = splitsIndex++;
-                        console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS for region " + i + " with splits:\n[" + SPLITS[i] + "]\n")
+                    if(splitsSent < SPLITS_NUMBER){
+                        const splits = new Array();
+                        for(let i = 0; i < VALUES_PER_SPLIT; i++){
+                            splits.push(ANIMALS[Math.floor(Math.random() * ANIMALS.length)])
+                        }
+                        console.log("sending EXECUTE_TASK named MAPREDUCE_REGION_SPLITS")
                         testChannel.send(JSON.stringify({
                             channel: 'EXECUTE_TASK',
                             payload: {
                                 name: 'MAPREDUCE_REGION_SPLITS',
                                 params: {
-                                    regionId: i,
-                                    splits: SPLITS[i]
+                                    regionId: splitsSent,
+                                    splits: splits
                                 }
                             }
                         }))
+                        ++splitsSent;
                     }
                 } else {
                     console.log("EXECUTE_TASK DID NOT RESPOND WITH ACK, NO BUENO")
