@@ -12,12 +12,12 @@ const REDUCE_FUNCTION = "(v1, v2) => { return v1 + v2 }";
 const MAP_WORKERS_REQUESTED = 2;
 const REDUCE_WORKERS_REQUESTED = 1;
 const ANIMALS = ["dog", "cow", "cat", "pidgeon", "crocodile", "bee"];
-const SPLITS_NUMBER = 10;
+const SPLITS_NUMBER = 100;
 var splitsSent = 0;
-const VALUES_PER_SPLIT = 500;
+const VALUES_PER_SPLIT = 1000;
 var accumulatedResults = 0;
 
-const CONNECTION_STRING = 'http://ec2-3-73-1-24.eu-central-1.compute.amazonaws.com:8000';
+const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
 // const CONNECTION_STRING = 'ws://localhost:8000';
 
 console.log("STARTING INVOKING ENDPOINT");
