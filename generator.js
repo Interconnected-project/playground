@@ -1,5 +1,5 @@
-const REGIONS = 2000
-const SLICES_PER_REGION = 500;
+const REGIONS = 10
+const SLICES_PER_REGION = 5;
 const HEIGHT = 1000;
 const WIDTH = 10000;
 const fs = require('fs');
@@ -12,8 +12,8 @@ for(let r = 0; r < REGIONS; r++){
         regionPoints.push([x, y])
     }
     const structure = JSON.stringify({
-        region: r,
-        points: regionPoints
+        regionId: r,
+        splits: regionPoints
     })
     fs.writeFile('.\\generated\\region-' + r + '.json', structure, (err) => {
         if (err) throw err;
