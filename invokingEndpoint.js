@@ -9,12 +9,12 @@ const role = "INVOKING_ENDPOINT"
 const OPERATION_ID = "008";
 const MAP_FUNCTION = "(s) => { return [s, 1] }";
 const REDUCE_FUNCTION = "(v1, v2) => { return v1 + v2 }";
-const MAP_WORKERS_REQUESTED = 2;
+const MAP_WORKERS_REQUESTED = 3;
 const REDUCE_WORKERS_REQUESTED = 1;
 const ANIMALS = ["dog", "cow", "cat", "pidgeon", "crocodile", "bee"];
-const SPLITS_NUMBER = 100;
+const SPLITS_NUMBER = 10;
 var splitsSent = 0;
-const VALUES_PER_SPLIT = 1000;
+const VALUES_PER_SPLIT = 100;
 var accumulatedResults = 0;
 
 const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
