@@ -9,8 +9,29 @@ const MAP_WORKERS_REQUESTED = 2;
 const REDUCE_WORKERS_REQUESTED = 1;
 const REGIONS = 10;
 
-const MAP_FUNCTION = "(s) => { return ['test', 1] }";
-const REDUCE_FUNCTION = "(v1, v2) => { return v1 + v2 }";
+const mapFunction = (p) => {
+    const pointX = p[0];
+    const pointY = p[1];
+    const redX = 10000;
+    const redY = 1000;
+    const redDist = Math.pow(pointX - redX, 2) + Math.pow(pointY - redY, 2);
+    const blueX = 0;
+    const blueY = 0;
+    const blueDist = Math.pow(pointX - blueX, 2) + Math.pow(pointY - blueY, 2);
+    if(redDist > blueDist){
+        return ["red", [p]];
+    } else {
+        return ["blue", [p]];
+    }
+}
+
+const reduceFunction = (p1, p2) => {
+    p1.push(p2[0]);
+    return p1;
+}
+
+const MAP_FUNCTION = eval(mapFunction).toString();
+const REDUCE_FUNCTION = eval(reduceFunction).toString();
 const MY_ID = "IE_" + Date.now().toString();
 const ROLE = "INVOKING_ENDPOINT"
 const PREFIX = '.\\generated\\region-';
@@ -203,7 +224,7 @@ function handleDataChannelMessage(dataChannel){
                 }
             } break;
             case 'TASK_COMPLETED': {
-                console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " with result:\n" + parsedMsg.payload.params.result + "\nreceived: " + ++resultsReceived + "\n")
+                console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " with result:\n" + JSON.stringify(parsedMsg.payload.params.result) + "\nreceived: " + ++resultsReceived + "\n")
             } break;
         }
     }
