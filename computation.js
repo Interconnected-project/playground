@@ -19,7 +19,7 @@ const mapFunction = (p) => {
     const red = Math.pow(x - 200, 2) + Math.pow(y - 900, 2);
     const green = Math.pow(x - 700, 2) + Math.pow(y - 100, 2);
     const blue = Math.pow(x - 1300, 2) + Math.pow(y - 700, 2);
-    if(red < green && red < blue){
+    if(red <= green && red <= blue){
         return ["red", [p]];
     } else if(green < red && green < blue){
         return ["green", [p]];
