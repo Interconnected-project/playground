@@ -1,5 +1,5 @@
-const REGIONS = 10
-const SLICES_PER_REGION = 5;
+const REGIONS = 2000
+const SLICES_PER_REGION = 5000;
 const HEIGHT = 1000;
 const WIDTH = 1500;
 const fs = require('fs');
@@ -15,8 +15,13 @@ for(let r = 0; r < REGIONS; r++){
         regionId: r,
         splits: regionPoints
     })
-    fs.writeFile('.\\generated\\region-' + r + '.json', structure, (err) => {
-        if (err) throw err;
-        console.log('Data written to file');
-    });
+    fs.writeFileSync('.\\generated\\region-' + r + '.json', structure, function (err) {
+        if (err){ 
+            throw err;
+        }else{
+            console.log('Region written to file: ' + r);
+        }
+      });
 }
+
+console.log("GENERATION COMPLETED");

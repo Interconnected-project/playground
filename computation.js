@@ -5,9 +5,13 @@ const fs = require('fs');
 
 const io = require("socket.io-client");
 
-const MAP_WORKERS_REQUESTED = 2;
-const REDUCE_WORKERS_REQUESTED = 1;
-const REGIONS = 10;
+const BATCH_NUMBER = 1;
+const REGIONS = 2000;
+const MAP_WORKERS_REQUESTED = 3;
+const REDUCE_WORKERS_REQUESTED = 2;
+
+const SOURCE_PREFIX = '.\\generated-' + BATCH_NUMBER + '\\region-';
+const DESTINATION_PREFIX = '.\\computed-' + BATCH_NUMBER + '\\result-'
 
 const mapFunction = (p) => {
     const x = p[0];
@@ -33,8 +37,6 @@ const MAP_FUNCTION = eval(mapFunction).toString();
 const REDUCE_FUNCTION = eval(reduceFunction).toString();
 const MY_ID = "IE_" + Date.now().toString();
 const ROLE = "INVOKING_ENDPOINT"
-const SOURCE_PREFIX = '.\\generated\\region-';
-const DESTINATION_PREFIX = '.\\computed\\result-'
 const SUFFIX = '.json';
 const OPERATION_ID = (Date.now() + 100).toString();
 const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
