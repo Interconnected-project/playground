@@ -1,7 +1,7 @@
 const REGIONS = 10
 const SLICES_PER_REGION = 5;
 const HEIGHT = 1000;
-const WIDTH = 10000;
+const WIDTH = 1500;
 const fs = require('fs');
 
 for(let r = 0; r < REGIONS; r++){

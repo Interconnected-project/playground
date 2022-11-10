@@ -10,16 +10,15 @@ const REDUCE_WORKERS_REQUESTED = 1;
 const REGIONS = 10;
 
 const mapFunction = (p) => {
-    const pointX = p[0];
-    const pointY = p[1];
-    const redX = 10000;
-    const redY = 1000;
-    const redDist = Math.pow(pointX - redX, 2) + Math.pow(pointY - redY, 2);
-    const blueX = 0;
-    const blueY = 0;
-    const blueDist = Math.pow(pointX - blueX, 2) + Math.pow(pointY - blueY, 2);
-    if(redDist > blueDist){
+    const x = p[0];
+    const y = p[1];
+    const red = Math.pow(x - 200, 2) + Math.pow(y - 900, 2);
+    const green = Math.pow(x - 700, 2) + Math.pow(y - 100, 2);
+    const blue = Math.pow(x - 1300, 2) + Math.pow(y - 700, 2);
+    if(red > green && red > blue){
         return ["red", [p]];
+    } else if(green > red && green > blue){
+        return ["green", [p]];
     } else {
         return ["blue", [p]];
     }
@@ -34,7 +33,8 @@ const MAP_FUNCTION = eval(mapFunction).toString();
 const REDUCE_FUNCTION = eval(reduceFunction).toString();
 const MY_ID = "IE_" + Date.now().toString();
 const ROLE = "INVOKING_ENDPOINT"
-const PREFIX = '.\\generated\\region-';
+const SOURCE_PREFIX = '.\\generated\\region-';
+const DESTINATION_PREFIX = '.\\computed\\result-'
 const SUFFIX = '.json';
 const OPERATION_ID = (Date.now() + 100).toString();
 const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000';
@@ -44,7 +44,7 @@ const CONNECTION_STRING = 'http://ec2-3-208-18-248.compute-1.amazonaws.com:8000'
 let resultsReceived = 0;
 const regionsToSend = new Array();
 for(let i = REGIONS - 1; i >= 0; i--){
-    let rawdata = fs.readFileSync(PREFIX + i + SUFFIX);
+    let rawdata = fs.readFileSync(SOURCE_PREFIX + i + SUFFIX);
     regionsToSend.push(JSON.parse(rawdata));
 }
 console.log("DATA LOADED");
@@ -224,7 +224,15 @@ function handleDataChannelMessage(dataChannel){
                 }
             } break;
             case 'TASK_COMPLETED': {
-                console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " with result:\n" + JSON.stringify(parsedMsg.payload.params.result) + "\nreceived: " + ++resultsReceived + "\n")
+                if(parsedMsg.payload.params.regionId === undefined || parsedMsg.payload.params.result === undefined){
+                    throw new Error("received invalid result")
+                }
+                fs.writeFile(DESTINATION_PREFIX + parsedMsg.payload.params.regionId + SUFFIX, JSON.stringify(parsedMsg.payload.params.result), err => {
+                    if (err) {
+                        throw new Error(err)
+                    }
+                    console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " (" + ++resultsReceived + ")\n")
+                  })
             } break;
         }
     }
