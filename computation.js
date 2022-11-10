@@ -5,10 +5,10 @@ const fs = require('fs');
 
 const io = require("socket.io-client");
 
-const BATCH_NUMBER = 1;
-const REGIONS = 2000;
-const MAP_WORKERS_REQUESTED = 3;
-const REDUCE_WORKERS_REQUESTED = 2;
+const BATCH_NUMBER = 2;
+const REGIONS = 100;
+const MAP_WORKERS_REQUESTED = 2;
+const REDUCE_WORKERS_REQUESTED = 1;
 
 const SOURCE_PREFIX = '.\\generated-' + BATCH_NUMBER + '\\region-';
 const DESTINATION_PREFIX = '.\\computed-' + BATCH_NUMBER + '\\result-'
@@ -19,9 +19,9 @@ const mapFunction = (p) => {
     const red = Math.pow(x - 200, 2) + Math.pow(y - 900, 2);
     const green = Math.pow(x - 700, 2) + Math.pow(y - 100, 2);
     const blue = Math.pow(x - 1300, 2) + Math.pow(y - 700, 2);
-    if(red > green && red > blue){
+    if(red < green && red < blue){
         return ["red", [p]];
-    } else if(green > red && green > blue){
+    } else if(green < red && green < blue){
         return ["green", [p]];
     } else {
         return ["blue", [p]];
@@ -53,6 +53,8 @@ console.log("DATA LOADED");
 if(REGIONS !== regionsToSend.length){
     throw new Error("the number of data loaded and the REGIONS do not match");
 }
+
+const startTime = Date.now();
 
 let recruitmentRequestAlreadySent = false;
 let peer = undefined;
@@ -234,6 +236,10 @@ function handleDataChannelMessage(dataChannel){
                         throw new Error(err)
                     }
                     console.log("received TASK_COMPLETED for region " + parsedMsg.payload.params.regionId + " (" + ++resultsReceived + ")\n")
+                    if(resultsReceived === REGIONS){
+                        const endTime = Date.now();
+                        console.log(endTime - startTime);
+                    }
                   })
             } break;
         }
